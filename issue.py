@@ -1,10 +1,7 @@
 import logging
-
 import asyncio
 import uvicorn
-
 from enums import OcppMisc as oc
-
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16.enums import Action, RegistrationStatus, AuthorizationStatus, ResetType, ResetStatus
@@ -15,9 +12,13 @@ from datetime import datetime
 from fastapi import Body, FastAPI, status, Request, WebSocket, Depends
 from chargepoint import ChargePoint
 
+
+
 app = FastAPI()
 #print(asgiref.__version__)
 logging.basicConfig(level=logging.INFO)
+
+
 
 
 class ChargePoint(cp):
@@ -55,6 +56,8 @@ class ChargePoint(cp):
         return await self.call(call.ResetPayload( type=type))
 
 
+    
+    
 class CentralSystem:
     def __init__(self):
         self._chargers = {}
@@ -77,7 +80,7 @@ class CentralSystem:
 
     async def reset_fun(self, cp_id: str, rst_type: str):
         print("atleast got here")
-        #print(self._chargers.items())
+        print(self._chargers.items())      # NO CHARGERS STORED HERE IDK WHY
         for cp, task in self._chargers.items():
             print(cp.id)
             if cp.id == cp_id:
@@ -96,6 +99,7 @@ class SocketAdapter:
         await self._ws.send_text(msg)
 
 
+        
 @app.websocket("/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str, csms: CentralSystem = Depends(CentralSystem)):
     await websocket.accept(subprotocol='ocpp1.6')
@@ -108,6 +112,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, csms: Central
 
 
 
+    
 
 @app.post("/reset")
 async def reset(request: Request, cms: CentralSystem = Depends(CentralSystem)):
@@ -116,6 +121,7 @@ async def reset(request: Request, cms: CentralSystem = Depends(CentralSystem)):
     get_response = await cms.reset_fun(data["cp_id"], data["type"])
     print(f"==> The response from charger==> {get_response}")
     return "sucess"
+
 
 
 if __name__ == '__main__':
